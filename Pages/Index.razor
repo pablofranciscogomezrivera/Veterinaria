@@ -1,0 +1,51 @@
+﻿@page "/"
+@inject NavigationManager Navigation
+
+<div class="header-full">
+    <div class="header-content">
+        <div class="header-left">
+            <h1>Sistema Veterinario</h1>
+            <p>Panel de Control</p>
+        </div>
+        <div class="user-section">
+            <div class="user-circle">
+                <span>DM</span>
+            </div>
+            <div class="user-info">
+                <p class="user-name">Dra. María González</p>
+                <button class="btn-logout" @onclick="CerrarSesion">Cerrar Sesión</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="cards-container">
+        <div class="card" @onclick='() => Navigation.NavigateTo("/registrar-dueno")'>
+            <div class="card-icon">👤</div>
+            <h2>Registrar Dueño</h2>
+            <p>Registrar información del propietario de la mascota</p>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">🐾</div>
+            <h2>Registrar Mascota</h2>
+            <p>Registrar nueva mascota en el sistema</p>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">💰</div>
+            <h2>Cobrar Atención</h2>
+            <p>Registrar pago de consulta o servicio</p>
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    private void CerrarSesion()
+    {       
+        Navigation.NavigateTo("/");
+    }
+}

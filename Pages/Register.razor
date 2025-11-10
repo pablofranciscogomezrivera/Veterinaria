@@ -1,0 +1,131 @@
+﻿@using Data
+@using Service
+
+@page "/registrar-dueno"
+@inject NavigationManager Navigation
+@inject RenaperService RenaperService
+
+<div class="form-container">
+    <header class="form-header">
+        <h1>Registrar Dueño</h1>
+        <p>Complete los datos del propietario de la mascota</p>
+    </header>
+
+    <EditForm Model="@dueño" OnValidSubmit="Submit" class="form">
+        <DataAnnotationsValidator />
+
+        <div class="form-group">
+            <label for="nombre">Nombre Completo *</label>
+            <InputText id="nombre" @bind-Value="dueño.NombreCompleto" required placeholder="Ingrese el nombre completo" />
+            <ValidationMessage For="@(() => dueño.NombreCompleto)" />
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="dni">DNI *</label>
+                <InputNumber id="dni" @bind-Value="dueño.Dni" @onchange="BuscarDueñoPorDni" required placeholder="123456789" />
+                <ValidationMessage For="@(() => dueño.Dni)" />
+            </div>
+
+            <div class="form-group">
+                <label for="fechaNacimiento">Fecha de Nacimiento *</label>
+                <InputDate id="fechaNacimiento" @bind-Value="dueño.FechaNacimiento" required />
+                <ValidationMessage For="@(() => dueño.FechaNacimiento)" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="domicilio">Domicilio *</label>
+            <InputText id="domicilio" @bind-Value="dueño.Domicilio" required placeholder="Calle, número, ciudad" />
+            <ValidationMessage For="@(() => dueño.Domicilio)" />
+        </div>
+
+        <div class="form-group">
+            <label for="sexo">Sexo *</label>
+            <InputSelect id="sexo" @bind-Value="dueño.Sexo" required>
+                <option value="">Seleccione una opción</option>
+                <option value="M">Masculino</option>
+                <option value="F">Femenino</option>
+                <option value="O">Otro</option>
+            </InputSelect>
+            <ValidationMessage For="@(() => dueño.Sexo)" />
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">
+                Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary">
+                Guardar Dueño
+            </button>
+        </div>
+
+        @if (buscando)
+        {
+        <p class="text-info">Buscando datos...</p>}
+            @if (errorDni != null)
+            {
+        <p class="text-danger">@errorDni</p>}
+
+    </EditForm>
+</div>
+
+
+@code {
+
+    private bool buscando = false;
+    private string? errorDni = null;
+
+    private Dueño dueño = new Dueño();
+
+    private async Task BuscarDueñoPorDni()
+    {
+
+        if (dueño.Dni <= 0)
+        {
+            errorDni = null;
+            return;
+        }
+
+        buscando = true;
+        errorDni = null;
+
+        //poner el endpoint
+        //var personaEncontrada = await RenaperService.GetPersonaByDni(dueño.Dni);
+
+        //if (personaEncontrada != null)
+        //{
+
+        //    dueño.NombreCompleto = personaEncontrada.NombreCompleto;
+        //    dueño.Domicilio = personaEncontrada.Domicilio;
+        //    dueño.FechaNacimiento = personaEncontrada.FechaNacimiento;
+        //    dueño.Sexo = personaEncontrada.Sexo;
+
+        //    StateHasChanged();
+        //}
+        //else
+        //{
+        //    dueño.NombreCompleto = string.Empty;
+        //    dueño.Domicilio = string.Empty;
+        //    dueño.FechaNacimiento = null;
+        //    dueño.Sexo = string.Empty;
+
+        //    errorDni = $"No se encontraron datos para el DNI: {dueño.Dni}. Por favor, complete manualmente.";
+        //}
+
+        buscando = false;
+    }
+
+    private void Submit()
+    {
+        //Console.WriteLine("Datos válidos. Listo para enviar a la API.");
+        //Navigation.NavigateTo("/");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+
+ }
