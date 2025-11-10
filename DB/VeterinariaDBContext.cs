@@ -12,8 +12,9 @@ namespace Veterinaria.DB
         }
 
         // --- Tablas de la Base de Datos ---
-        public DbSet<Dueño> Dueños { get; set; }
-        public DbSet<Mascota> Mascotas { get; set; }
+        // POR ESTAS
+        public DbSet<Dueño> Dueños { get; set; } = null!;
+        public DbSet<Mascota> Mascotas { get; set; } = null!;
         // Aquí podrías agregar
         // public DbSet<Cita> Citas { get; set; }
         // public DbSet<HistoriaClinica> HistoriasClinicas { get; set; }

@@ -1,28 +1,50 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using Veterinaria.DB;
+using Veterinaria.Service;
 
-namespace Veterinaria
+var builder = WebApplication.CreateBuilder(args);
+
+// --- INICIO: Reemplaza a ConfigureServices de Startup.cs ---
+
+// 1. Añadir servicios al contenedor.
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
+
+// 2. Configurar el DbContext con la cadena de conexión
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<VeterinariaDBContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// 3. Registrar tus servicios personalizados
+builder.Services.AddHttpClient(); // Para RenaperService
+builder.Services.AddScoped<RenaperService>();
+builder.Services.AddScoped<DueñoService>();
+
+
+// --- FIN: Reemplaza a ConfigureServices ---
+
+
+var app = builder.Build();
+
+// --- INICIO: Reemplaza a Configure de Startup.cs ---
+
+// 1. Configurar el pipeline de peticiones HTTP
+if (!app.Environment.IsDevelopment())
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
-
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+    app.UseExceptionHandler("/Error");
+    // The default HSTS value is 30 days.
+    app.UseHsts();
 }
+
+// 2. Middlewares
+app.UseHttpsRedirection();
+app.UseStaticFiles(); // Para que encuentre el CSS
+app.UseRouting();
+
+// 3. Endpoints de Blazor
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
+
+// --- FIN: Reemplaza a Configure ---
+
+app.Run();

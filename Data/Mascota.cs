@@ -1,5 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Veterinaria.Data
 {
@@ -25,6 +28,6 @@ namespace Veterinaria.Data
 
         // Propiedad de navegación
         [ForeignKey("IdDueño")]
-        public virtual Dueño Dueño { get; set; }
+        public virtual Dueño Dueño { get; set; } = null!;
     }
 }
