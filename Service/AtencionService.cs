@@ -49,7 +49,6 @@ namespace Veterinaria.Service
             }
             catch (Exception ex)
             {
-                // Aquí podrías loguear el error (ex.Message)
                 return false;
             }
         }

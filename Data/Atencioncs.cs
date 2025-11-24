@@ -13,7 +13,7 @@ namespace Veterinaria.Data
         public DateTime FechaAtencion { get; set; } = DateTime.Now;
 
         [Required(ErrorMessage = "El tipo de servicio es obligatorio.")]
-        public string TipoServicio { get; set; } = string.Empty; // Ej: "Consulta", "Vacunación", "Cirugía"
+        public string TipoServicio { get; set; } = string.Empty; 
 
         [Required(ErrorMessage = "El monto es obligatorio.")]
         [Range(0.01, double.MaxValue, ErrorMessage = "El monto debe ser mayor a 0.")]
@@ -21,11 +21,9 @@ namespace Veterinaria.Data
 
         public string? Observaciones { get; set; }
 
-        // --- RELACIÓN CON MASCOTA ---
         [Required]
         public int IdMascota { get; set; }
 
-        // Propiedad de navegación
         [ForeignKey("IdMascota")]
         public virtual Mascota Mascota { get; set; } = null!;
     }

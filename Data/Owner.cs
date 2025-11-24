@@ -8,14 +8,17 @@ namespace Veterinaria.Data
 {
     public class Owner
     {
-        [Key] // Es buena práctica definir la Key
+        [Key] 
         public int IdOwner { get; set; }
+
+        [Required(ErrorMessage = "El CUIL es obligatorio.")]
+        [StringLength(11, MinimumLength = 11, ErrorMessage = "El CUIL debe tener 11 dígitos.")]
+        public string Cuil { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El nombre es obligatorio.")]
         public string NombreCompleto { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El DNI es obligatorio.")]
-        // Se corrige la validación, DNI en Arg. es numérico pero se trata como string para no perder ceros
         [StringLength(8, MinimumLength = 7, ErrorMessage = "El DNI debe tener entre 7 y 8 dígitos.")]
         public string Dni { get; set; } = string.Empty;
 
@@ -28,8 +31,6 @@ namespace Veterinaria.Data
         [Required(ErrorMessage = "El sexo es obligatorio.")]
         public string Sexo { get; set; } = string.Empty;
 
-        // --- NUEVO ---
-        // Relación: Un dueño puede tener muchas mascotas
         public virtual ICollection<Mascota> Mascotas { get; set; } = new List<Mascota>();
     }
 }
