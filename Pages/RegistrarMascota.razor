@@ -119,24 +119,26 @@
 @code {
     private Mascota mascota = new Mascota();
     private List<Owner> owners = new List<Owner>();
+
     private string? saveMessage = null;
     private string? errorMessage = null;
+    private bool guardando = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // Cargar lista de dueños
         owners = await OwnerService.GetAllOwners();
     }
 
     private async Task Submit()
     {
+        guardando = true;
         saveMessage = null;
         errorMessage = null;
 
-        // Validar que se seleccionó un dueño
         if (mascota.IdOwner == 0)
         {
             errorMessage = "Debe seleccionar un dueño.";
+            guardando = false;
             return;
         }
 
@@ -145,12 +147,15 @@
         if (guardado)
         {
             saveMessage = "¡Mascota guardada con éxito!";
-            await Task.Delay(2000);
+            StateHasChanged(); 
+
+            await Task.Delay(3000); 
             Navigation.NavigateTo("/");
         }
         else
         {
             errorMessage = "Error al guardar la mascota.";
+            guardando = false;
         }
     }
 

@@ -1,115 +1,249 @@
-﻿@using Veterinaria.Data
+﻿@page "/registrar-dueno"
+@using Veterinaria.Data
 @using Veterinaria.Service
-
-@page "/registrar-dueno"
 @inject NavigationManager Navigation
 @inject RenaperService RenaperService
-@inject OwnerService OwnerService // --- NUEVO ---
+@inject OwnerService OwnerService
 
 <div class="form-container">
     <header class="form-header">
         <h1>Registrar Dueño</h1>
-        <p>Complete los datos del propietario de la mascota</p>
+        <p>Ingrese el CUIL para buscar o complete los datos manualmente</p>
     </header>
 
     <EditForm Model="@owner" OnValidSubmit="Submit" class="form">
         <DataAnnotationsValidator />
 
-        <div class="form-group">
-            <label for="nombre">Nombre Completo *</label>
-            <InputText id="nombre" @bind-Value="owner.NombreCompleto" required placeholder="Ingrese el nombre completo" />
-            <ValidationMessage For="@(() => owner.NombreCompleto)" />
+        <div class="form-row">
+            <div class="form-group">
+                <label for="cuil">CUIL (11 dígitos) *</label>
+                <input type="text"
+                       id="cuil"
+                       class="form-control"
+                       value="@owner.Cuil"
+                       @oninput="OnCuilChanged"
+                       placeholder="Ej: 20123456789"
+                       maxlength="11" />
+                <ValidationMessage For="@(() => owner.Cuil)" />
+
+                @if (buscando)
+                {
+                    <span class="text-info" style="font-size: 0.9em; font-weight: bold;">Buscando en RENAPER...</span>
+                }
+            </div>
+
+            <div class="form-group">
+                <label for="dni">DNI *</label>
+                <InputText id="dni" @bind-Value="owner.Dni" class="form-control" placeholder="Ingrese DNI manualmente" />
+                <ValidationMessage For="@(() => owner.Dni)" />
+            </div>
         </div>
 
         <div class="form-row">
             <div class="form-group">
-                <label for="dni">DNI *</label>
-                <InputText id="dni" @bind-Value="owner.Dni" required placeholder="12345678" />
-                <ValidationMessage For="@(() => owner.Dni)" />
+                <label for="fechaNacimiento">Fecha de Nacimiento *</label>
+                <InputDate id="fechaNacimiento" @bind-Value="owner.FechaNacimiento" class="form-control" />
+                <ValidationMessage For="@(() => owner.FechaNacimiento)" />
             </div>
 
             <div class="form-group">
-                <label for="fechaNacimiento">Fecha de Nacimiento *</label>
-                <InputDate id="fechaNacimiento" @bind-Value="owner.FechaNacimiento" required />
-                <ValidationMessage For="@(() => owner.FechaNacimiento)" />
+                <label for="sexo">Sexo *</label>
+                <InputSelect id="sexo" @bind-Value="owner.Sexo" class="form-control">
+                    <option value="">Seleccione una opción</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                    <option value="O">Otro</option>
+                </InputSelect>
+                <ValidationMessage For="@(() => owner.Sexo)" />
             </div>
+        </div>
+
+        <div class="form-group">
+            <label for="nombre">Nombre Completo *</label>
+            <InputText id="nombre" @bind-Value="owner.NombreCompleto" class="form-control" placeholder="Ingrese nombre completo" />
+            <ValidationMessage For="@(() => owner.NombreCompleto)" />
         </div>
 
         <div class="form-group">
             <label for="domicilio">Domicilio *</label>
-            <InputText id="domicilio" @bind-Value="owner.Domicilio" required placeholder="Calle, número, ciudad" />
+            <InputText id="domicilio" @bind-Value="owner.Domicilio" class="form-control" placeholder="Calle, número, ciudad" />
             <ValidationMessage For="@(() => owner.Domicilio)" />
-        </div>
-
-        <div class="form-group">
-            <label for="sexo">Sexo *</label>
-            <InputSelect id="sexo" @bind-Value="owner.Sexo" required>
-                <option value="">Seleccione una opción</option>
-                <option value="M">Masculino</option>
-                <option value="F">Femenino</option>
-                <option value="O">Otro</option>
-            </InputSelect>
-            <ValidationMessage For="@(() => owner.Sexo)" />
         </div>
 
         <div class="form-actions">
             <button type="button" class="btn btn-secondary" @onclick="Cancel">
                 Cancelar
             </button>
-            <button type="submit" class="btn btn-primary">
-                Guardar Dueño
+            <button type="submit" class="btn btn-primary" disabled="@guardando">
+                @(guardando ? "Guardando..." : "Guardar Dueño")
             </button>
         </div>
 
-        @if (buscando)
+        @if (errorApi != null)
         {
-            <p class="text-info">Buscando datos...</p>
-        }
-        @if (errorDni != null)
-        {
-            <p class="text-danger">@errorDni</p>
+            <p class="text-warning">@errorApi</p>
         }
         @if (saveMessage != null)
         {
             <p class="text-success">@saveMessage</p>
         }
+        @if (errorMessage != null)
+        {
+            <p class="text-danger">@errorMessage</p>
+        }
 
     </EditForm>
 </div>
 
+<style>
+    .form-control {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .btn-secondary {
+        color: #424242;
+        background: #f5f5f5;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 10px 24px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+            border-color: #bdbdbd;
+        }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .text-success {
+        color: #2e7d32;
+        font-weight: 500;
+        margin-top: 15px;
+        text-align: center;
+        background-color: #d4edda;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .text-danger {
+        color: #d32f2f;
+        font-weight: 500;
+        margin-top: 15px;
+        text-align: center;
+        background-color: #f8d7da;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .text-warning {
+        color: #856404;
+        background-color: #fff3cd;
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    .text-info {
+        color: #0c5460;
+    }
+</style>
 
 @code {
-    private bool buscando = false;
-    private string? errorDni = null;
-    private string? saveMessage = null; // Para feedback
-
     private Owner owner = new Owner();
+    private bool buscando = false;
+    private bool guardando = false;
 
-    private async Task BuscarOwnerPorDni()
+    private string? errorApi = null;
+    private string? saveMessage = null;
+    private string? errorMessage = null;
+
+    private async Task OnCuilChanged(ChangeEventArgs e)
     {
-        // El servicio Renaper sigue sin un endpoint real,
-        // así que esta lógica se mantiene comentada como en el original.
-        //
+        string input = e.Value?.ToString() ?? "";
+
+        if (!long.TryParse(input, out _) && input != "") return;
+
+        owner.Cuil = input;
+        errorApi = null;
+
+        if (owner.Cuil.Length == 11)
+        {
+            await BuscarEnRenaper(owner.Cuil);
+        }
+    }
+
+    private async Task BuscarEnRenaper(string cuil)
+    {
+        buscando = true;
+        StateHasChanged();
+
+        var persona = await RenaperService.GetPersonaByCuil(cuil);
+
+        if (persona != null)
+        {
+            owner.NombreCompleto = $"{persona.Nombres} {persona.Apellido}".Trim();
+            owner.Domicilio = persona.Direccion ?? "";
+            owner.Dni = !string.IsNullOrEmpty(persona.Dni) ? persona.Dni : ExtraerDniDeCuil(cuil);
+
+            if (DateTime.TryParse(persona.FechaNacimiento, out DateTime fecha))
+            {
+                owner.FechaNacimiento = fecha;
+            }
+
+            if (!string.IsNullOrEmpty(persona.Sexo))
+            {
+                owner.Sexo = persona.Sexo.ToUpper().StartsWith("M") ? "M" :
+                             persona.Sexo.ToUpper().StartsWith("F") ? "F" : "O";
+            }
+            errorApi = null;
+        }
+        else
+        {
+            errorApi = "No se pudo autocompletar (API no disponible o CUIL inexistente). Ingrese los datos manualmente.";
+        }
+
         buscando = false;
+        StateHasChanged();
+    }
+
+    private string ExtraerDniDeCuil(string cuil)
+    {
+        if (cuil.Length == 11)
+        {
+            return cuil.Substring(2, 8);
+        }
+        return "";
     }
 
     private async Task Submit()
     {
+        guardando = true;
         saveMessage = null;
-        
-        // --- LÓGICA DE GUARDADO ---
-        bool guardado = await OwnerService.SaveOwner(owner);
+        errorMessage = null;
 
-        if (guardado)
+        bool exito = await OwnerService.SaveOwner(owner);
+
+        if (exito)
         {
-            saveMessage = "¡Dueño guardado con éxito!";
-            // Redirigir después de 2 segundos
-            await Task.Delay(2000);
+            saveMessage = "¡Dueño registrado con éxito!";
+            StateHasChanged();
+
+            await Task.Delay(3000);
             Navigation.NavigateTo("/");
         }
         else
         {
-            saveMessage = "Error al guardar el dueño.";
+            errorMessage = "Error al guardar en la base de datos.";
+            guardando = false;
         }
     }
 

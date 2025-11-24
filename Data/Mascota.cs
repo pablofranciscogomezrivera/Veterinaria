@@ -16,18 +16,15 @@ namespace Veterinaria.Data
         public string Nombre { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La especie es obligatoria.")]
-        public string Especie { get; set; } = string.Empty; // Ej: "Perro", "Gato"
+        public string Especie { get; set; } = string.Empty; 
 
         public string? Raza { get; set; }
 
         public DateTime? FechaNacimiento { get; set; }
 
-        // --- RELACIÓN ---
-        // Clave foránea para el Owner
         [Required]
         public int IdOwner { get; set; }
 
-        // Propiedad de navegación
         [ForeignKey("IdOwner")]
         public virtual Owner Owner { get; set; } = null!;
     }
