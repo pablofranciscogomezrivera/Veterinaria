@@ -1,12 +1,14 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.DB;
 using Veterinaria.Service;
+using Blazored.Toast;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddBlazoredToast();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<VeterinariaDBContext>(options =>
@@ -14,9 +16,9 @@ builder.Services.AddDbContext<VeterinariaDBContext>(options =>
 
 builder.Services.AddHttpClient(); 
 builder.Services.AddHttpClient<RenaperService>();
-builder.Services.AddScoped < OwnerService > ();
-builder.Services.AddScoped<MascotaService>();
-builder.Services.AddScoped<AtencionService>();
+builder.Services.AddScoped<IOwnerService, OwnerService>();
+builder.Services.AddScoped<IMascotaService, MascotaService>();
+builder.Services.AddScoped<IAtencionService, AtencionService>();
 
 // --- FIN ---
 

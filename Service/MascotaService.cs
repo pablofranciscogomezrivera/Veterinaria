@@ -1,16 +1,19 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Data;
 using Veterinaria.DB;
+using Microsoft.Extensions.Logging;
 
 namespace Veterinaria.Service
 {
-    public class MascotaService
+    public class MascotaService : IMascotaService
     {
         private readonly VeterinariaDBContext _context;
+        private readonly ILogger<MascotaService> _logger;
 
-        public MascotaService(VeterinariaDBContext context)
+        public MascotaService(VeterinariaDBContext context, ILogger<MascotaService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<List<Mascota>> GetAllMascotas()
@@ -44,6 +47,7 @@ namespace Veterinaria.Service
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error al guardar la mascota: {Nombre}", mascota.Nombre);
                 return false;
             }
         }

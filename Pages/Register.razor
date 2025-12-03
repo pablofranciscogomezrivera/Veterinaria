@@ -1,14 +1,27 @@
 ﻿@page "/registrar-dueno"
+@page "/registrar-dueno/{Id:int}"
 @using Veterinaria.Data
 @using Veterinaria.Service
 @inject NavigationManager Navigation
 @inject RenaperService RenaperService
-@inject OwnerService OwnerService
+@inject IOwnerService OwnerService
+@inject IToastService ToastService
 
-<div class="form-container">
+<div class="form-container position-relative">
+
+    @if (isBusy)
+    {
+        <div class="spinner-overlay">
+            <div class="spinner-content">
+                <div class="spinner"></div>
+                <p>Procesando...</p>
+            </div>
+        </div>
+    }
+
     <header class="form-header">
-        <h1>Registrar Dueño</h1>
-        <p>Ingrese el CUIL para buscar o complete los datos manualmente</p>
+        <h1>@(Id.HasValue ? "Editar Dueño" : "Registrar Dueño")</h1>
+        <p>@(Id.HasValue ? "Modifique los datos de contacto" : "Ingrese el CUIL para buscar")</p>
     </header>
 
     <EditForm Model="@owner" OnValidSubmit="Submit" class="form">
@@ -17,108 +30,145 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="cuil">CUIL (11 dígitos) *</label>
-                <input type="text"
-                       id="cuil"
-                       class="form-control"
-                       value="@owner.Cuil"
-                       @oninput="OnCuilChanged"
-                       placeholder="Ej: 20123456789"
-                       maxlength="11" />
-                <ValidationMessage For="@(() => owner.Cuil)" />
 
-                @if (buscando)
-                {
-                    <span class="text-info" style="font-size: 0.9em; font-weight: bold;">Buscando en API...</span>
-                }
+                <div class="input-group">
+                    <input type="text"
+                           id="cuil"
+                           class="form-control"
+                           @bind-value="owner.Cuil"
+                           placeholder="Ej: 20123456789"
+                           maxlength="11"
+                           disabled="@(Id.HasValue || isBusy)" />
+
+                    @if (!Id.HasValue) // Solo mostramos la lupa si es registro nuevo
+                    {
+                        <button class="btn btn-search" type="button" @onclick="BuscarCuil" disabled="@isBusy">
+                            🔍
+                        </button>
+                    }
+                </div>
+                <ValidationMessage For="@(() => owner.Cuil)" />
             </div>
 
             <div class="form-group">
                 <label for="dni">DNI *</label>
-                <InputText id="dni"
-                           @bind-Value="owner.Dni"
-                           class="form-control"
-                           placeholder="Ingrese DNI manualmente"
-                           disabled="@datosBloqueados" />
+                <InputText id="dni" @bind-Value="owner.Dni" class="form-control"
+                           placeholder="Ingrese DNI" disabled="@datosBloqueados" />
                 <ValidationMessage For="@(() => owner.Dni)" />
             </div>
         </div>
 
         <div class="form-group">
             <label for="nombre">Nombre Completo *</label>
-            <InputText id="nombre"
-                       @bind-Value="owner.NombreCompleto"
-                       class="form-control"
-                       placeholder="Ingrese nombre completo"
-                       disabled="@datosBloqueados" />
+            <InputText id="nombre" @bind-Value="owner.NombreCompleto" class="form-control"
+                       placeholder="Ingrese nombre" disabled="@datosBloqueados" />
             <ValidationMessage For="@(() => owner.NombreCompleto)" />
         </div>
 
         <div class="form-group">
             <label for="domicilio">Domicilio *</label>
-            <InputText id="domicilio"
-                       @bind-Value="owner.Domicilio"
-                       class="form-control"
-                       placeholder="Calle, número, ciudad"
-                       disabled="@datosBloqueados" />
+            <InputText id="domicilio" @bind-Value="owner.Domicilio" class="form-control"
+                       placeholder="Domicilio" disabled="@datosBloqueados" />
             <ValidationMessage For="@(() => owner.Domicilio)" />
         </div>
 
         <div class="form-row">
             <div class="form-group">
                 <label for="email">Email *</label>
-                <InputText id="email"
-                           @bind-Value="owner.Email"
-                           class="form-control"
-                           placeholder="ejemplo@correo.com" />
+                <InputText id="email" @bind-Value="owner.Email" class="form-control" disabled="@isBusy" />
                 <ValidationMessage For="@(() => owner.Email)" />
             </div>
 
             <div class="form-group">
                 <label for="telefono">Teléfono *</label>
-                <InputText id="telefono"
-                           @bind-Value="owner.Telefono"
-                           class="form-control"
-                           placeholder="Ej: 11 1234 5678" />
+                <InputText id="telefono" @bind-Value="owner.Telefono" class="form-control" disabled="@isBusy" />
                 <ValidationMessage For="@(() => owner.Telefono)" />
             </div>
         </div>
 
         <div class="form-actions">
-            <button type="button" class="btn btn-secondary" @onclick="Cancel">
-                Cancelar
+            <button type="button" class="btn btn-secondary" @onclick="Cancel" disabled="@isBusy">
+                @(Id.HasValue ? "Volver" : "Cancelar")
             </button>
-            <button type="submit" class="btn btn-primary" disabled="@guardando">
-                @(guardando ? "Guardando..." : "Guardar Dueño")
+            <button type="submit" class="btn btn-primary" disabled="@isBusy">
+                Guardar
             </button>
         </div>
-
-        @if (errorApi != null)
-        {
-            <p class="text-warning">@errorApi</p>
-        }
-        @if (saveMessage != null)
-        {
-            <p class="text-success">@saveMessage</p>
-        }
-        @if (errorMessage != null)
-        {
-            <p class="text-danger">@errorMessage</p>
-        }
 
     </EditForm>
 </div>
 
 <style>
+    /* Estilos para el Spinner */
+    .position-relative {
+        position: relative;
+    }
+
+    .spinner-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.85);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        border-radius: 12px;
+        backdrop-filter: blur(2px);
+    }
+
+    .spinner-content {
+        text-align: center;
+        color: #2e7d32;
+        font-weight: 600;
+    }
+
+    .spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 0.25em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border .75s linear infinite;
+        margin-bottom: 10px;
+    }
+
+    @@keyframes spinner-border {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Estilos para el botón de búsqueda */
+    .input-group {
+        display: flex;
+        width: 100%;
+    }
+
+        .input-group .form-control {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+    .btn-search {
+        background: #e8f5e9;
+        border: 1px solid #ced4da;
+        border-left: none;
+        border-top-right-radius: 4px;
+        border-bottom-right-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-search:hover {
+            background: #c8e6c9;
+        }
+
     .form-control:disabled {
         background-color: #e9ecef;
-        opacity: 1;
         cursor: not-allowed;
-    }
-    .form-control {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
     }
 
     .btn-secondary {
@@ -132,10 +182,10 @@
         cursor: pointer;
     }
 
-        .btn-secondary:hover {
-            background: #e0e0e0;
-            border-color: #bdbdbd;
-        }
+    .btn-secondary:hover {
+        background: #e0e0e0;
+        border-color: #bdbdbd;
+    }
 
     .form-group {
         margin-bottom: 20px;
@@ -146,9 +196,6 @@
         font-weight: 500;
         margin-top: 15px;
         text-align: center;
-        background-color: #d4edda;
-        padding: 10px;
-        border-radius: 5px;
     }
 
     .text-danger {
@@ -156,137 +203,180 @@
         font-weight: 500;
         margin-top: 15px;
         text-align: center;
-        background-color: #f8d7da;
-        padding: 10px;
-        border-radius: 5px;
-    }
-
-    .text-warning {
-        color: #856404;
-        background-color: #fff3cd;
-        padding: 10px;
-        border-radius: 5px;
-        text-align: center;
-        margin-top: 10px;
-    }
-
-    .text-info {
-        color: #0c5460;
     }
 </style>
 
+
 @code {
+    [Parameter] public int? Id { get; set; }
+
     private Owner owner = new Owner();
-    private bool buscando = false;
-    private bool guardando = false;
-    private bool datosBloqueados = false; 
+    private bool isBusy = false; // Controla el spinner
+    private bool datosBloqueados = false;
 
-    private string? errorApi = null;
-    private string? saveMessage = null;
-    private string? errorMessage = null;
-
-
-    private async Task OnCuilChanged(ChangeEventArgs e)
+    protected override async Task OnParametersSetAsync()
     {
-        string input = e.Value?.ToString() ?? "";
-        if (!long.TryParse(input, out _) && input != "") return;
-
-        owner.Cuil = input;
-        errorApi = null;
-
-        if (owner.Cuil.Length != 11)
+        if (Id.HasValue)
         {
-            datosBloqueados = false;
-            if (owner.IdOwner != 0) owner = new Owner { Cuil = input };
-        }
-
-        if (owner.Cuil.Length == 11)
-        {
-            await BuscarDatos(owner.Cuil);
+            isBusy = true; // Bloqueamos mientras carga
+            var ownerEncontrado = await OwnerService.GetOwnerById(Id.Value);
+            if (ownerEncontrado != null)
+            {
+                owner = ownerEncontrado;
+                datosBloqueados = true;
+            }
+            else
+            {
+                ToastService.ShowError("No se encontró el cliente solicitado.");
+                Navigation.NavigateTo("/clientes");
+            }
+            isBusy = false;
         }
     }
 
     
-    private async Task BuscarDatos(string cuil)
+    private async Task BuscarCuil()
     {
-        buscando = true;
-        saveMessage = null;
-        errorMessage = null;
-        StateHasChanged();
-
-        var ownerExistente = await OwnerService.GetOwnerByCuil(cuil);
-
-        var personaApi = await RenaperService.GetPersonaByCuil(cuil);
-
-        if (ownerExistente != null)
+        if (string.IsNullOrWhiteSpace(owner.Cuil) || owner.Cuil.Length != 11)
         {
-            owner = ownerExistente;
-
-            saveMessage = "El dueño ya existe. Puede actualizar sus datos de contacto.";
-            datosBloqueados = true;
-        }
-        else if (personaApi != null)
-        {
-            owner = new Owner { Cuil = cuil };
-
-            owner.NombreCompleto = $"{personaApi.Nombres} {personaApi.Apellido}".Trim();
-            owner.Domicilio = personaApi.Direccion ?? "";
-            owner.Dni = !string.IsNullOrEmpty(personaApi.Dni) ? personaApi.Dni : ExtraerDniDeCuil(cuil);
-
-            
-            owner.Email = personaApi.Mail ?? "";
-            owner.Telefono = personaApi.Telefono ?? "";
-
-            datosBloqueados = true;
-            errorApi = null;
-        }
-        else
-        {
-            
-            datosBloqueados = false;
-            errorApi = "No se encontró información. Ingrese los datos manualmente.";
-            
-            if (owner.IdOwner != 0) owner = new Owner { Cuil = cuil };
+            ToastService.ShowWarning("El CUIL debe tener 11 dígitos.");
+            return;
         }
 
-        buscando = false;
-        StateHasChanged();
+        isBusy = true; 
+        StateHasChanged(); 
+
+        
+        await Task.Delay(500);
+
+        try
+        {
+            
+            var ownerExistente = await OwnerService.GetOwnerByCuil(owner.Cuil);
+
+            
+            var personaApi = await RenaperService.GetPersonaByCuil(owner.Cuil);
+
+            if (ownerExistente != null)
+            {
+                owner = ownerExistente;
+                ToastService.ShowInfo("Cliente encontrado en base de datos.");
+                datosBloqueados = true;
+            }
+            else if (personaApi != null)
+            {
+                
+                owner.NombreCompleto = $"{personaApi.Nombres} {personaApi.Apellido}".Trim();
+                owner.Domicilio = personaApi.Direccion ?? "";
+                
+                owner.Dni = !string.IsNullOrEmpty(personaApi.Dni) ? personaApi.Dni : owner.Cuil.Substring(2, 8);
+                owner.Email = personaApi.Mail ?? "";
+                owner.Telefono = personaApi.Telefono ?? "";
+
+                datosBloqueados = true;
+                ToastService.ShowSuccess("Datos obtenidos de Renaper.");
+            }
+            else
+            {
+                
+                datosBloqueados = false;
+                ToastService.ShowWarning("No se encontró información. Ingrese los datos manualmente.");
+            }
+        }
+        catch (Exception)
+        {
+            ToastService.ShowError("Error al consultar servicios.");
+        }
+        finally
+        {
+            isBusy = false; 
+        }
     }
+    
 
-    private string ExtraerDniDeCuil(string cuil)
+   
+    private async Task OnCuilChanged(ChangeEventArgs e)
     {
-        if (cuil.Length == 11) return cuil.Substring(2, 8);
-        return "";
+        
+        if (Id.HasValue) return;
+
+        string input = e.Value?.ToString() ?? "";
+
+       
+        if (owner.IdOwner != 0 && input != owner.Cuil)
+        {
+            owner = new Owner();
+            datosBloqueados = false;
+        }
+
+        if (!long.TryParse(input, out _) && input != "") return;
+
+        owner.Cuil = input;
     }
 
     private async Task Submit()
     {
-        guardando = true;
-        saveMessage = null;
-        errorMessage = null;
+        isBusy = true;
+        StateHasChanged();
 
-        
-        bool exito = await OwnerService.SaveOwner(owner);
-
-        if (exito)
+        try
         {
-            saveMessage = owner.IdOwner > 0
-                ? "¡Datos del dueño actualizados con éxito!"
-                : "¡Dueño registrado con éxito!";
+            // 1. SEGURIDAD ANTI-DUPLICADOS
+           
+            if (!Id.HasValue)
+            {
+                // Verificamos si el CUIL ya existe en la BD realmente
+                var checkDb = await OwnerService.GetOwnerByCuil(owner.Cuil);
 
-            StateHasChanged();
-            await Task.Delay(3000);
-            Navigation.NavigateTo("/");
+                if (checkDb != null)
+                {
+                    if (owner.IdOwner == 0)
+                    {
+                        ToastService.ShowWarning($"El cliente con CUIL {owner.Cuil} ya se encuentra registrado.");
+
+                       
+                        owner = checkDb;
+                        datosBloqueados = true;
+                        isBusy = false;
+                        return; 
+                    }
+                }
+            }
+
+           
+            bool exito = await OwnerService.SaveOwner(owner);
+
+            if (exito)
+            {
+                
+                if (owner.IdOwner > 0 && Id.HasValue)
+                    ToastService.ShowSuccess("¡Datos actualizados correctamente!");
+                else
+                    ToastService.ShowSuccess("¡Cliente registrado con éxito!");
+
+                await Task.Delay(2000);
+
+                if (Id.HasValue) Navigation.NavigateTo("/clientes");
+                else Navigation.NavigateTo("/");
+            }
+            else
+            {
+                ToastService.ShowError("Ocurrió un error al guardar en la base de datos.");
+            }
         }
-        else
+        catch (Exception)
         {
-            errorMessage = "Error al guardar en la base de datos.";
-            guardando = false;
+            ToastService.ShowError("Error inesperado al procesar la solicitud.");
+        }
+        finally
+        {
+            isBusy = false;
         }
     }
 
     private void Cancel()
     {
-        Navigation.NavigateTo("/");
+        if (Id.HasValue) Navigation.NavigateTo("/clientes");
+        else Navigation.NavigateTo("/");
     }
 }

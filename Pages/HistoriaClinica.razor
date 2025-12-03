@@ -1,0 +1,197 @@
+﻿@page "/historia-clinica/{IdMascota:int}"
+@using Veterinaria.Data
+@using Veterinaria.Service
+@inject IAtencionService AtencionService
+@inject IMascotaService MascotaService
+@inject NavigationManager Navigation
+
+<div class="container py-5">
+
+    <div class="mb-4">
+        <button class="btn btn-link text-decoration-none text-secondary ps-0 mb-2 d-flex align-items-center back-btn" @onclick="Volver">
+            <i class="bi bi-arrow-left-circle-fill fs-4 me-2 text-success"></i>
+            <span class="fw-bold">Volver al listado</span>
+        </button>
+    </div>
+
+    @if (mascota == null)
+    {
+        @if (cargando)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-grow text-success" role="status"></div>
+                <p class="mt-2 text-muted">Buscando expediente...</p>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger rounded-3 border-0 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> Mascota no encontrada.
+            </div>
+        }
+    }
+    else
+    {
+        <div class="card border-0 shadow rounded-4 mb-5 overflow-hidden profile-card">
+            <div class="card-body p-4 p-lg-5">
+                <div class="row align-items-center">
+                    <div class="col-md-auto text-center mb-3 mb-md-0">
+                        <div class="avatar-large shadow">
+                            @(mascota.Especie == "Perro" ? "🐶" : mascota.Especie == "Gato" ? "🐱" : "🐾")
+                        </div>
+                    </div>
+                    <div class="col-md">
+                        <h1 class="display-6 fw-bold text-dark mb-1">@mascota.Nombre</h1>
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="badge bg-success rounded-pill px-3">@mascota.Especie</span>
+                            <span class="text-muted">|</span>
+                            <span class="text-secondary">@(mascota.Raza ?? "Raza desconocida")</span>
+                        </div>
+
+                        <div class="row g-3 text-muted small">
+                            <div class="col-auto">
+                                <div class="d-flex align-items-center bg-white px-3 py-2 rounded-3 border">
+                                    <i class="bi bi-person-fill text-success me-2 fs-5"></i>
+                                    <div>
+                                        <span class="d-block fw-bold text-dark">Dueño</span>
+                                        @mascota.Owner?.NombreCompleto
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="d-flex align-items-center bg-white px-3 py-2 rounded-3 border">
+                                    <i class="bi bi-cake2-fill text-warning me-2 fs-5"></i>
+                                    <div>
+                                        <span class="d-block fw-bold text-dark">Edad</span>
+                                        @CalcularEdad(mascota.FechaNacimiento)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center mb-4">
+            <h4 class="fw-bold text-dark mb-0">Historial Médico</h4>
+            <div class="ms-3 flex-grow-1 border-bottom"></div>
+        </div>
+
+        @if (atenciones == null || !atenciones.Any())
+        {
+            <div class="text-center py-5 bg-light rounded-4 border border-dashed">
+                <div class="fs-1 opacity-25 mb-2">📋</div>
+                <p class="text-muted">No hay registros médicos previos.</p>
+            </div>
+        }
+        else
+        {
+            <div class="timeline">
+                @foreach (var atencion in atenciones)
+                {
+                    <div class="card mb-3 border-0 shadow-sm timeline-item">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="fw-bold text-success mb-1">
+                                        <i class="bi bi-bandaid me-2"></i>@atencion.TipoServicio
+                                    </h5>
+                                    <div class="text-muted small mb-3">
+                                        <i class="bi bi-calendar-event me-1"></i> @atencion.FechaAtencion.ToString("D")
+                                        <span class="mx-1">•</span>
+                                        <i class="bi bi-clock me-1"></i> @atencion.FechaAtencion.ToString("HH:mm")
+                                    </div>
+                                </div>
+                                <span class="badge bg-light text-dark border fs-6">
+                                    $@atencion.Monto.ToString("N2")
+                                </span>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(atencion.Observaciones))
+                            {
+                                <div class="bg-light p-3 rounded-3 border-start border-4 border-success text-secondary fst-italic">
+                                    "@atencion.Observaciones"
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+<style>
+    /* Estilos Profile */
+    .profile-card {
+        background: linear-gradient(to right, #ffffff, #f8fdf9);
+    }
+
+    .avatar-large {
+        width: 120px;
+        height: 120px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        border: 5px solid #e8f5e9;
+    }
+
+    /* Botón Volver */
+    .back-btn {
+        transition: transform 0.2s;
+    }
+
+        .back-btn:hover {
+            transform: translateX(-5px);
+            color: #198754 !important;
+        }
+
+    /* Timeline */
+    .timeline-item {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .timeline-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+        }
+</style>
+
+@code {
+    [Parameter] public int IdMascota { get; set; }
+
+    private Mascota? mascota;
+    private List<Atencion>? atenciones;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cargando = true;
+        try
+        {
+            mascota = await MascotaService.GetMascotaById(IdMascota);
+            if (mascota != null)
+            {
+                atenciones = await AtencionService.GetAtencionesByMascotaId(IdMascota);
+            }
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private string CalcularEdad(DateTime? fechaNacimiento)
+    {
+        if (!fechaNacimiento.HasValue) return "-";
+        var edad = DateTime.Today.Year - fechaNacimiento.Value.Year;
+        if (fechaNacimiento.Value.Date > DateTime.Today.AddYears(-edad)) edad--;
+        return $"{edad} años";
+    }
+
+    private void Volver() => Navigation.NavigateTo("/clientes");
+}

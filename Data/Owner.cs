@@ -21,15 +21,12 @@ namespace Veterinaria.Data
         [Required(ErrorMessage = "El domicilio es obligatorio.")]
         public string Domicilio { get; set; } = string.Empty;
 
-        // --- NUEVOS CAMPOS ---
         [Required(ErrorMessage = "El email es obligatorio.")]
         [EmailAddress(ErrorMessage = "Formato de email inválido.")]
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El teléfono es obligatorio.")]
         public string Telefono { get; set; } = string.Empty;
-        // ---------------------
-
         public virtual ICollection<Mascota> Mascotas { get; set; } = new List<Mascota>();
     }
 }

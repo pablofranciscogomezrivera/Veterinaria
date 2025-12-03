@@ -1,21 +1,26 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging; 
 using Veterinaria.Data;
 using Veterinaria.DB;
 
 namespace Veterinaria.Service
 {
-    public class OwnerService
+    public class OwnerService : IOwnerService
     {
         private readonly VeterinariaDBContext _context;
+        private readonly ILogger<OwnerService> _logger; 
 
-        public OwnerService(VeterinariaDBContext context)
+        public OwnerService(VeterinariaDBContext context, ILogger<OwnerService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<List<Owner>> GetAllOwners()
         {
-            return await _context.Owners.ToListAsync();
+            return await _context.Owners
+                .Include(o => o.Mascotas)
+                .ToListAsync();
         }
 
         public async Task<Owner?> GetOwnerById(int id)
@@ -45,6 +50,7 @@ namespace Veterinaria.Service
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error al guardar el dueño: {Nombre}", dueño.NombreCompleto);
                 return false;
             }
         }

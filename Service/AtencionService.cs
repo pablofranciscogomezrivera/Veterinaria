@@ -1,16 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Data;
 using Veterinaria.DB;
+using Microsoft.Extensions.Logging;
+
 
 namespace Veterinaria.Service
 {
-    public class AtencionService
+    public class AtencionService : IAtencionService
     {
         private readonly VeterinariaDBContext _context;
+        private readonly ILogger<AtencionService> _logger;
 
-        public AtencionService(VeterinariaDBContext context)
+        public AtencionService(VeterinariaDBContext context, ILogger<AtencionService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<List<Atencion>> GetAllAtenciones()
@@ -49,6 +53,7 @@ namespace Veterinaria.Service
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error al guardar la atención para la mascota ID: {IdMascota}", atencion.IdMascota);
                 return false;
             }
         }

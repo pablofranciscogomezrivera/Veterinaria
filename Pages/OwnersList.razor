@@ -1,0 +1,207 @@
+﻿@page "/clientes"
+@using Veterinaria.Data
+@using Veterinaria.Service
+@inject IOwnerService OwnerService
+@inject NavigationManager Navigation
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 fade-in">
+        <div>
+            <h2 class="fw-bold text-dark mb-0">Clientes</h2>
+            <p class="text-muted small mb-0">Gestiona propietarios y pacientes</p>
+        </div>
+        <button class="btn btn-primary-custom shadow-sm" @onclick="IrARegistro">
+            <i class="bi bi-person-plus-fill me-2"></i>Nuevo Cliente
+        </button>
+    </div>
+
+    @if (owners == null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-success" role="status"></div>
+        </div>
+    }
+    else if (!owners.Any())
+    {
+        <div class="text-center py-5 bg-light rounded-4 border border-dashed">
+            <div class="text-muted fs-1 mb-3">👥</div>
+            <h5>No hay clientes registrados</h5>
+            <button class="btn btn-outline-success mt-2" @onclick="IrARegistro">Registrar el primero</button>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden fade-in">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 table-hover">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4 py-3 text-secondary text-uppercase small fw-bold" style="width: 30%">Cliente</th>
+                            <th class="py-3 text-secondary text-uppercase small fw-bold">Contacto</th>
+                            <th class="py-3 text-secondary text-uppercase small fw-bold">Mascotas</th>
+                            <th class="text-end pe-4 py-3 text-secondary text-uppercase small fw-bold">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var owner in owners)
+                        {
+                            <tr>
+                                <td class="ps-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-initials me-3 shadow-sm">
+                                            @owner.NombreCompleto.Substring(0, 1).ToUpper()
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">@owner.NombreCompleto</div>
+                                            <div class="small text-muted">
+                                                <i class="bi bi-card-heading me-1"></i>@owner.Dni
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column gap-1">
+                                        <div class="small text-muted">
+                                            <i class="bi bi-envelope text-success me-2"></i>@owner.Email
+                                        </div>
+                                        <div class="small text-muted">
+                                            <i class="bi bi-telephone text-success me-2"></i>@owner.Telefono
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (owner.Mascotas != null && owner.Mascotas.Any())
+                                    {
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @foreach (var m in owner.Mascotas)
+                                            {
+                                                <button class="btn btn-sm btn-mascota shadow-sm"
+                                                        @onclick="() => VerHistoria(m.IdMascota)"
+                                                        title="Ver Historia Clínica">
+                                                    <span class="me-1">@(m.Especie == "Perro" ? "🐶" : m.Especie == "Gato" ? "🐱" : "🐾")</span>
+                                                    @m.Nombre
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-secondary border fw-normal">Sin mascotas</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-icon-light text-primary"
+                                            @onclick="() => Editar(owner.IdOwner)"
+                                            title="Editar datos">
+                                        <i class="bi bi-pencil-square fs-5"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    /* Estilos Personalizados */
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Botón Principal */
+    .btn-primary-custom {
+        background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 50px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.4) !important;
+            color: white;
+        }
+
+    /* Avatar */
+    .avatar-initials {
+        width: 45px;
+        height: 45px;
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        color: #1b5e20;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    /* Tabla */
+    .table-hover tbody tr:hover {
+        background-color: #f8fcf9;
+    }
+
+    /* Botón Mascota */
+    .btn-mascota {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.85rem;
+        color: #495057;
+        transition: all 0.2s;
+    }
+
+        .btn-mascota:hover {
+            border-color: #2e7d32;
+            background-color: #f1f8e9;
+            color: #2e7d32;
+        }
+
+    /* Botón Editar (Solo ícono limpio) */
+    .btn-icon-light {
+        background: transparent;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        transition: all 0.2s;
+    }
+
+        .btn-icon-light:hover {
+            background-color: #e3f2fd;
+            color: #0d6efd;
+        }
+</style>
+
+@code {
+    private List<Owner>? owners;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(300); // Pequeña pausa para efecto visual
+        owners = await OwnerService.GetAllOwners();
+    }
+
+    private void IrARegistro() => Navigation.NavigateTo("/registrar-dueno");
+    private void Editar(int id) => Navigation.NavigateTo($"/registrar-dueno/{id}");
+    private void VerHistoria(int idMascota) => Navigation.NavigateTo($"/historia-clinica/{idMascota}");
+}

@@ -3,24 +3,28 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Veterinaria.DTO;
+using Microsoft.Extensions.Logging;
 
 namespace Veterinaria.Service
 {
     public class RenaperService
     {
         private readonly HttpClient _httpClient;
-        private const string BaseUrl = "https://renaper-simulador.onrender.com/api";
-        private const string ApiKey = "51a98fd5306a4ae1b41b353f8d00dfb3";
+        private readonly string? _baseUrl;
+        private readonly ILogger<RenaperService> _logger;
 
-        public RenaperService(HttpClient httpClient)
+        public RenaperService(HttpClient httpClient, IConfiguration configuration, ILogger<RenaperService> logger)
         {
             _httpClient = httpClient;
-            _httpClient.DefaultRequestHeaders.Add("X-API-Key", ApiKey);
+            var apiKey = configuration["RenaperApi:ApiKey"];
+            _baseUrl = configuration["RenaperApi:BaseUrl"];
+            _httpClient.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+            _logger = logger;
         }
 
         public async Task<OwnerDTO?> GetPersonaByCuil(string cuil)
         {
-            string url = $"{BaseUrl}/personas/por-cuil/{cuil}";
+            string url = $"{_baseUrl}/personas/por-cuil/{cuil}";
 
             try
             {
@@ -32,10 +36,15 @@ namespace Veterinaria.Service
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     return JsonSerializer.Deserialize<OwnerDTO>(content, options);
                 }
-                return null;
+                else
+                {
+                    _logger.LogWarning("API Renaper respondió con código: {StatusCode} para CUIL: {Cuil}", response.StatusCode, cuil);
+                    return null;
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error de conexión con API Renaper para CUIL: {Cuil}", cuil);
                 return null;
             }
         }
