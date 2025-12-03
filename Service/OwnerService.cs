@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+ï»¿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Data;
 using Veterinaria.DB;
 
@@ -23,19 +23,22 @@ namespace Veterinaria.Service
             return await _context.Owners.FindAsync(id);
         }
 
-        public async Task<bool> SaveOwner(Owner dueño)
+        public async Task<Owner?> GetOwnerByCuil(string cuil)
+        {
+            return await _context.Owners.FirstOrDefaultAsync(o => o.Cuil == cuil);
+        }
+
+        public async Task<bool> SaveOwner(Owner dueÃ±o)
         {
             try
             {
-                if (dueño.IdOwner == 0)
+                if (dueÃ±o.IdOwner == 0)
                 {
-                    // Es un dueño nuevo
-                    await _context.Owners.AddAsync(dueño);
+                    await _context.Owners.AddAsync(dueÃ±o);
                 }
                 else
                 {
-                    // Es una edición
-                    _context.Owners.Update(dueño);
+                    _context.Owners.Update(dueÃ±o);
                 }
                 await _context.SaveChangesAsync();
                 return true;

@@ -28,46 +28,59 @@
 
                 @if (buscando)
                 {
-                    <span class="text-info" style="font-size: 0.9em; font-weight: bold;">Buscando en RENAPER...</span>
+                    <span class="text-info" style="font-size: 0.9em; font-weight: bold;">Buscando en API...</span>
                 }
             </div>
 
             <div class="form-group">
                 <label for="dni">DNI *</label>
-                <InputText id="dni" @bind-Value="owner.Dni" class="form-control" placeholder="Ingrese DNI manualmente" />
+                <InputText id="dni"
+                           @bind-Value="owner.Dni"
+                           class="form-control"
+                           placeholder="Ingrese DNI manualmente"
+                           disabled="@datosBloqueados" />
                 <ValidationMessage For="@(() => owner.Dni)" />
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="fechaNacimiento">Fecha de Nacimiento *</label>
-                <InputDate id="fechaNacimiento" @bind-Value="owner.FechaNacimiento" class="form-control" />
-                <ValidationMessage For="@(() => owner.FechaNacimiento)" />
-            </div>
-
-            <div class="form-group">
-                <label for="sexo">Sexo *</label>
-                <InputSelect id="sexo" @bind-Value="owner.Sexo" class="form-control">
-                    <option value="">Seleccione una opción</option>
-                    <option value="M">Masculino</option>
-                    <option value="F">Femenino</option>
-                    <option value="O">Otro</option>
-                </InputSelect>
-                <ValidationMessage For="@(() => owner.Sexo)" />
             </div>
         </div>
 
         <div class="form-group">
             <label for="nombre">Nombre Completo *</label>
-            <InputText id="nombre" @bind-Value="owner.NombreCompleto" class="form-control" placeholder="Ingrese nombre completo" />
+            <InputText id="nombre"
+                       @bind-Value="owner.NombreCompleto"
+                       class="form-control"
+                       placeholder="Ingrese nombre completo"
+                       disabled="@datosBloqueados" />
             <ValidationMessage For="@(() => owner.NombreCompleto)" />
         </div>
 
         <div class="form-group">
             <label for="domicilio">Domicilio *</label>
-            <InputText id="domicilio" @bind-Value="owner.Domicilio" class="form-control" placeholder="Calle, número, ciudad" />
+            <InputText id="domicilio"
+                       @bind-Value="owner.Domicilio"
+                       class="form-control"
+                       placeholder="Calle, número, ciudad"
+                       disabled="@datosBloqueados" />
             <ValidationMessage For="@(() => owner.Domicilio)" />
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <InputText id="email"
+                           @bind-Value="owner.Email"
+                           class="form-control"
+                           placeholder="ejemplo@correo.com" />
+                <ValidationMessage For="@(() => owner.Email)" />
+            </div>
+
+            <div class="form-group">
+                <label for="telefono">Teléfono *</label>
+                <InputText id="telefono"
+                           @bind-Value="owner.Telefono"
+                           class="form-control"
+                           placeholder="Ej: 11 1234 5678" />
+                <ValidationMessage For="@(() => owner.Telefono)" />
+            </div>
         </div>
 
         <div class="form-actions">
@@ -96,6 +109,11 @@
 </div>
 
 <style>
+    .form-control:disabled {
+        background-color: #e9ecef;
+        opacity: 1;
+        cursor: not-allowed;
+    }
     .form-control {
         width: 100%;
         padding: 8px;
@@ -161,54 +179,74 @@
     private Owner owner = new Owner();
     private bool buscando = false;
     private bool guardando = false;
+    private bool datosBloqueados = false; 
 
     private string? errorApi = null;
     private string? saveMessage = null;
     private string? errorMessage = null;
 
+
     private async Task OnCuilChanged(ChangeEventArgs e)
     {
         string input = e.Value?.ToString() ?? "";
-
         if (!long.TryParse(input, out _) && input != "") return;
 
         owner.Cuil = input;
         errorApi = null;
 
+        if (owner.Cuil.Length != 11)
+        {
+            datosBloqueados = false;
+            if (owner.IdOwner != 0) owner = new Owner { Cuil = input };
+        }
+
         if (owner.Cuil.Length == 11)
         {
-            await BuscarEnRenaper(owner.Cuil);
+            await BuscarDatos(owner.Cuil);
         }
     }
 
-    private async Task BuscarEnRenaper(string cuil)
+    
+    private async Task BuscarDatos(string cuil)
     {
         buscando = true;
+        saveMessage = null;
+        errorMessage = null;
         StateHasChanged();
 
-        var persona = await RenaperService.GetPersonaByCuil(cuil);
+        var ownerExistente = await OwnerService.GetOwnerByCuil(cuil);
 
-        if (persona != null)
+        var personaApi = await RenaperService.GetPersonaByCuil(cuil);
+
+        if (ownerExistente != null)
         {
-            owner.NombreCompleto = $"{persona.Nombres} {persona.Apellido}".Trim();
-            owner.Domicilio = persona.Direccion ?? "";
-            owner.Dni = !string.IsNullOrEmpty(persona.Dni) ? persona.Dni : ExtraerDniDeCuil(cuil);
+            owner = ownerExistente;
 
-            if (DateTime.TryParse(persona.FechaNacimiento, out DateTime fecha))
-            {
-                owner.FechaNacimiento = fecha;
-            }
+            saveMessage = "El dueño ya existe. Puede actualizar sus datos de contacto.";
+            datosBloqueados = true;
+        }
+        else if (personaApi != null)
+        {
+            owner = new Owner { Cuil = cuil };
 
-            if (!string.IsNullOrEmpty(persona.Sexo))
-            {
-                owner.Sexo = persona.Sexo.ToUpper().StartsWith("M") ? "M" :
-                             persona.Sexo.ToUpper().StartsWith("F") ? "F" : "O";
-            }
+            owner.NombreCompleto = $"{personaApi.Nombres} {personaApi.Apellido}".Trim();
+            owner.Domicilio = personaApi.Direccion ?? "";
+            owner.Dni = !string.IsNullOrEmpty(personaApi.Dni) ? personaApi.Dni : ExtraerDniDeCuil(cuil);
+
+            
+            owner.Email = personaApi.Mail ?? "";
+            owner.Telefono = personaApi.Telefono ?? "";
+
+            datosBloqueados = true;
             errorApi = null;
         }
         else
         {
-            errorApi = "No se pudo autocompletar (API no disponible o CUIL inexistente). Ingrese los datos manualmente.";
+            
+            datosBloqueados = false;
+            errorApi = "No se encontró información. Ingrese los datos manualmente.";
+            
+            if (owner.IdOwner != 0) owner = new Owner { Cuil = cuil };
         }
 
         buscando = false;
@@ -217,10 +255,7 @@
 
     private string ExtraerDniDeCuil(string cuil)
     {
-        if (cuil.Length == 11)
-        {
-            return cuil.Substring(2, 8);
-        }
+        if (cuil.Length == 11) return cuil.Substring(2, 8);
         return "";
     }
 
@@ -230,13 +265,16 @@
         saveMessage = null;
         errorMessage = null;
 
+        
         bool exito = await OwnerService.SaveOwner(owner);
 
         if (exito)
         {
-            saveMessage = "¡Dueño registrado con éxito!";
-            StateHasChanged();
+            saveMessage = owner.IdOwner > 0
+                ? "¡Datos del dueño actualizados con éxito!"
+                : "¡Dueño registrado con éxito!";
 
+            StateHasChanged();
             await Task.Delay(3000);
             Navigation.NavigateTo("/");
         }

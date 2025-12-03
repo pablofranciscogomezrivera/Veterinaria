@@ -33,12 +33,10 @@ namespace Veterinaria.Service
             {
                 if (mascota.IdMascota == 0)
                 {
-                    // Es una mascota nueva
                     await _context.Mascotas.AddAsync(mascota);
                 }
                 else
                 {
-                    // Es una edición
                     _context.Mascotas.Update(mascota);
                 }
                 await _context.SaveChangesAsync();

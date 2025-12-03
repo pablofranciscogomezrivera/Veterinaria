@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Veterinaria.Data;
 using Veterinaria.DTO;
 
 namespace Veterinaria.Service
@@ -13,7 +10,7 @@ namespace Veterinaria.Service
     {
         private readonly HttpClient _httpClient;
         private const string BaseUrl = "https://renaper-simulador.onrender.com/api";
-        private const string ApiKey = "84610933fdfa42bb8d061b814fa3ab4c";
+        private const string ApiKey = "51a98fd5306a4ae1b41b353f8d00dfb3";
 
         public RenaperService(HttpClient httpClient)
         {
@@ -42,6 +39,5 @@ namespace Veterinaria.Service
                 return null;
             }
         }
-
     }
 }

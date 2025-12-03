@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Veterinaria.Data
 {
     public class Owner
     {
-        [Key] 
+        [Key]
         public int IdOwner { get; set; }
 
         [Required(ErrorMessage = "El CUIL es obligatorio.")]
@@ -22,14 +18,17 @@ namespace Veterinaria.Data
         [StringLength(8, MinimumLength = 7, ErrorMessage = "El DNI debe tener entre 7 y 8 dígitos.")]
         public string Dni { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "La fecha de nacimiento es obligatoria.")]
-        public DateTime? FechaNacimiento { get; set; }
-
         [Required(ErrorMessage = "El domicilio es obligatorio.")]
         public string Domicilio { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "El sexo es obligatorio.")]
-        public string Sexo { get; set; } = string.Empty;
+        // --- NUEVOS CAMPOS ---
+        [Required(ErrorMessage = "El email es obligatorio.")]
+        [EmailAddress(ErrorMessage = "Formato de email inválido.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El teléfono es obligatorio.")]
+        public string Telefono { get; set; } = string.Empty;
+        // ---------------------
 
         public virtual ICollection<Mascota> Mascotas { get; set; } = new List<Mascota>();
     }
