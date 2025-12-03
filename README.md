@@ -101,6 +101,8 @@ Shared: Componentes compartidos (Layout, Menú).
 
 📸 Capturas de Pantalla
 <img width="1504" height="882" alt="image" src="https://github.com/user-attachments/assets/5cc1ed95-b2f9-44d9-9cfc-f8eeb04a4d17" />
+<img width="1508" height="1013" alt="image" src="https://github.com/user-attachments/assets/c98a8267-a431-40c6-91fc-33752d8563d1" />
+
 <img width="1508" height="1030" alt="image" src="https://github.com/user-attachments/assets/ef5f5c99-9637-4490-9b8a-2dc61ada45ce" />
 
 <img width="1515" height="1029" alt="image" src="https://github.com/user-attachments/assets/82a41b32-47f1-4363-8225-7daded9b7e7e" />
